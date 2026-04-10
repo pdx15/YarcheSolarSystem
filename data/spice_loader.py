@@ -1,13 +1,15 @@
 import spiceypy as spice
 import os
 
-KERNEL_PATH = "data/kernels/"
-
 def load_kernels():
-    for file in os.listdir(KERNEL_PATH):
-        if file.endswith(".bsp") or file.endswith(".tls"):
-            spice.furnsh(os.path.join(KERNEL_PATH, file))
+    base = "data/kernels/"
 
+    spice.furnsh(os.path.join(base, "naif0012.tls"))
+    spice.furnsh(os.path.join(base, "de440.bsp"))
+    spice.furnsh(os.path.join(base, "mar097.bsp"))
+    spice.furnsh(os.path.join(base, "jup365.bsp"))
+    spice.furnsh(os.path.join(base, "sat441.bsp"))
+    
 def get_et():
     return spice.str2et("2025-01-01T00:00:00")
 
