@@ -20,46 +20,27 @@ from data.bodies import (
 )
 from data.spice_loader import get_et, get_loaded_spk_targets, load_kernels
 
-
-SATURN_RING_BANDS = (
-    {"inner": 0.74, "outer": 0.88, "color": color.rgba(174, 154, 118, 120)},
-    {"inner": 0.92, "outer": 1.08, "color": color.rgba(204, 186, 150, 165)},
-    {"inner": 1.12, "outer": 1.28, "color": color.rgba(226, 210, 178, 115)},
-)
+# Кольца Сатурна в километрах (внутренний и внешний радиусы)
+SATURN_RING_BANDS_KM = [
+    {"inner": 74500, "outer": 92000, "color": color.rgba(174, 154, 118, 120)},   # C
+    {"inner": 92000, "outer": 117000, "color": color.rgba(204, 186, 150, 165)},  # B
+    {"inner": 122000, "outer": 136800, "color": color.rgba(226, 210, 178, 115)}, # A
+]
 
 ASTEROID_BELT_INNER_RADIUS_KM = 329_000_000
 ASTEROID_BELT_OUTER_RADIUS_KM = 478_000_000
 ASTEROID_BELT_COUNT = 450
-MAX_SATELLITE_ORBITS_PER_SYSTEM = 24
 
 PRIMARY_ORBIT_BODIES = {
-    "MERCURY",
-    "VENUS",
-    "EARTH",
-    "MARS",
-    "JUPITER",
-    "SATURN",
-    "URANUS",
-    "NEPTUNE",
-    "PLUTO",
-    "CERES",
+    "MERCURY", "VENUS", "EARTH", "MARS", "JUPITER", "SATURN",
+    "URANUS", "NEPTUNE", "PLUTO", "CERES",
 }
 
 SATELLITE_DISTANCE_EXAGGERATION = {
-    "EARTH": 80,
-    "MARS": 140,
-    "JUPITER": 120,
-    "SATURN": 120,
-    "URANUS": 140,
-    "NEPTUNE": 180,
-    "PLUTO": 220,
-    "HAUMEA": 280,
-    "MAKEMAKE": 280,
-    "QUAOAR": 280,
-    "ORCUS": 280,
-    "ERIS": 280,
+    "EARTH": 80, "MARS": 140, "JUPITER": 120, "SATURN": 120,
+    "URANUS": 140, "NEPTUNE": 180, "PLUTO": 220,
+    "HAUMEA": 280, "MAKEMAKE": 280, "QUAOAR": 280, "ORCUS": 280, "ERIS": 280,
 }
-
 
 def select_target(targets, available_targets):
     for target in targets:
@@ -70,30 +51,25 @@ def select_target(targets, available_targets):
             continue
     return None
 
-
 def resolve_name(target_code, fallback_name):
     try:
         return spice.bodc2n(int(target_code))
     except Exception:
         return fallback_name
 
-
 def get_texture_path(body_name, fallback_name="MOON"):
     candidate = BODY_TEXTURES.get(body_name, BODY_TEXTURES.get(fallback_name))
     fallback = BODY_TEXTURES.get(fallback_name, BODY_TEXTURES["MOON"])
-
     if candidate and os.path.exists(candidate):
         return candidate
     if fallback and os.path.exists(fallback):
         return fallback
     return BODY_TEXTURES["MOON"]
 
-
 def scaled_size(body_name):
     if body_name == "SUN":
         return SUN_SCALE
     return BODY_SCALES.get(body_name, BODY_SCALES["MOON"]) * SIZE_SCALE
-
 
 def to_scaled_vec(position):
     return Vec3(
@@ -102,60 +78,42 @@ def to_scaled_vec(position):
         position[1] * DISTANCE_SCALE,
     )
 
-
 def get_scaled_position(target, et, observer):
     position, _ = spice.spkpos(target, et, "J2000", "NONE", observer)
     return to_scaled_vec(position)
-
 
 def exaggerate_satellite_offset(relative_position, parent_entity, parent_name):
     distance = relative_position.length()
     if distance <= 0:
         return relative_position
-
     display_position = relative_position * SATELLITE_DISTANCE_EXAGGERATION.get(parent_name, 120)
     minimum_distance = (parent_entity.scale_x * 0.8) + 1.2
-
     if display_position.length() < minimum_distance:
         display_position = relative_position.normalized() * minimum_distance
-
     return display_position
-
 
 def create_ring_mesh(inner_radius, outer_radius, segments=128):
     vertices = []
     uvs = []
     triangles = []
-
     for step in range(segments + 1):
         angle = (step / segments) * math.tau
         x = math.cos(angle)
         z = math.sin(angle)
-
         vertices.append(Vec3(x * outer_radius, 0, z * outer_radius))
         vertices.append(Vec3(x * inner_radius, 0, z * inner_radius))
         uvs.append((step / segments, 1))
         uvs.append((step / segments, 0))
-
     for step in range(segments):
         outer_index = step * 2
         inner_index = outer_index + 1
         next_outer = outer_index + 2
         next_inner = outer_index + 3
-
-        triangles.extend(
-            [
-                outer_index,
-                inner_index,
-                next_outer,
-                next_outer,
-                inner_index,
-                next_inner,
-            ]
-        )
-
+        triangles.extend([
+            outer_index, inner_index, next_outer,
+            next_outer, inner_index, next_inner,
+        ])
     return Mesh(vertices=vertices, triangles=triangles, uvs=uvs, mode="triangle")
-
 
 class SolarSystemScene(Entity):
     def __init__(self):
@@ -183,7 +141,6 @@ class SolarSystemScene(Entity):
     def _add_body(self, name, target, texture_name=None):
         if name in self.body_lookup:
             return self.body_lookup[name]
-
         body = CelestialBody(
             name,
             get_texture_path(texture_name or name),
@@ -236,20 +193,16 @@ class SolarSystemScene(Entity):
         for parent_name, family in PLANETARY_SATELLITE_FAMILIES.items():
             if parent_name not in self.body_lookup:
                 continue
-
             observer = family["observer"]
             excluded_targets = {int(target) for target in family["planet_targets"]}
-
             if int(observer) not in self.available_targets:
                 continue
-
             target_ids = sorted(
                 body_id
                 for body_id in self.available_targets
                 if any(start <= body_id < end for start, end in family["ranges"])
                 and body_id not in excluded_targets
             )
-
             for body_id in target_ids:
                 name = resolve_name(body_id, f"{parent_name}_{body_id}")
                 self._add_satellite(name, str(body_id), observer, parent_name)
@@ -258,10 +211,8 @@ class SolarSystemScene(Entity):
         for system in TNO_SYSTEM_DEFINITIONS:
             parent = self.body_lookup.get(system["name"])
             observer = system["observer"]
-
             if not parent or int(observer) not in self.available_targets:
                 continue
-
             for satellite in system["satellites"]:
                 target = select_target(satellite["targets"], self.available_targets)
                 if target:
@@ -272,22 +223,20 @@ class SolarSystemScene(Entity):
         if not saturn:
             self.saturn_rings = []
             return
-
         self.saturn_rings = []
         saturn_entity = saturn["entity"]
-
-        for index, band in enumerate(SATURN_RING_BANDS, start=1):
-            mesh = create_ring_mesh(
-                band["inner"],
-                band["outer"],
-            )
+        ring_texture = load_texture("assets/textures/saturn_ring_alpha.png")
+        for idx, band in enumerate(SATURN_RING_BANDS_KM):
+            inner = band["inner"] * DISTANCE_SCALE
+            outer = band["outer"] * DISTANCE_SCALE
+            mesh = create_ring_mesh(inner, outer)
             ring = Entity(
                 parent=saturn_entity,
                 model=mesh,
+                texture=ring_texture,
                 double_sided=True,
-                unlit=True,
                 transparency=True,
-                y=index * 0.01,
+                y=idx * 0.01,
                 color=band["color"],
             )
             self.saturn_rings.append(ring)
@@ -297,37 +246,23 @@ class SolarSystemScene(Entity):
         rng = random.Random(42)
         inner = ASTEROID_BELT_INNER_RADIUS_KM * DISTANCE_SCALE
         outer = ASTEROID_BELT_OUTER_RADIUS_KM * DISTANCE_SCALE
-
         for _ in range(ASTEROID_BELT_COUNT):
             radius = rng.uniform(inner, outer)
             angle = rng.uniform(0, math.tau)
             y_offset = rng.uniform(-0.18, 0.18)
             rock_scale = rng.uniform(0.015, 0.045) * SIZE_SCALE
-
             Entity(
                 parent=belt_parent,
                 model="cube",
                 color=color.rgba(140, 132, 116, rng.randint(90, 160)),
                 position=Vec3(math.cos(angle) * radius, y_offset, math.sin(angle) * radius),
-                rotation=Vec3(
-                    rng.uniform(0, 360),
-                    rng.uniform(0, 360),
-                    rng.uniform(0, 360),
-                ),
+                rotation=Vec3(rng.uniform(0, 360), rng.uniform(0, 360), rng.uniform(0, 360)),
                 scale=rock_scale,
             )
-
         return belt_parent
 
     def _add_orbit(self, target, center, duration_days, steps, y_offset=0, distance_multiplier=1):
-        orbit = create_real_orbit(
-            target,
-            center,
-            self.et,
-            duration_days=duration_days,
-            steps=steps,
-            distance_multiplier=distance_multiplier,
-        )
+        orbit = create_real_orbit(target, center, self.et, duration_days, steps, distance_multiplier)
         if orbit:
             orbit.y = y_offset
             self.orbits.append(orbit)
@@ -338,25 +273,21 @@ class SolarSystemScene(Entity):
                 continue
             if record["name"] not in PRIMARY_ORBIT_BODIES:
                 continue
-
             duration_days = 3650
             steps = 300
-
             if record["name"] in {"PLUTO", "HAUMEA", "MAKEMAKE", "QUAOAR", "ORCUS", "ERIS", "SEDNA"}:
                 duration_days = 20000
                 steps = 360
             elif record["name"] in {"CERES", "PALLAS", "VESTA", "HYGIEA"}:
                 duration_days = 2500
                 steps = 240
-
+            elif record["name"] in {"MERCURY", "VENUS", "EARTH", "MARS"}:
+                steps = 500  # Больше точек для внутренних планет
             self._add_orbit(record["target"], "SUN", duration_days, steps, y_offset=-0.05)
-
-        return
 
     def update(self):
         self.et += time.dt * TIME_SCALE
         self.sun.position = Vec3(0, 0, 0)
-
         for record in self.body_records:
             if record["name"] == "SUN":
                 continue
@@ -364,7 +295,6 @@ class SolarSystemScene(Entity):
                 record["entity"].position = get_scaled_position(record["target"], self.et, "SUN")
             except Exception:
                 continue
-
         for record in self.satellite_records:
             parent = self.body_lookup.get(record["parent_name"])
             if not parent:
@@ -380,3 +310,14 @@ class SolarSystemScene(Entity):
                 record["entity"].position = parent_position + relative_position
             except Exception:
                 continue
+
+    def get_body_info(self, entity):
+        """Возвращает словарь с информацией о теле по его Entity."""
+        for record in self.body_records + self.satellite_records:
+            if record["entity"] == entity:
+                return {
+                    "name": record["name"],
+                    "target": record.get("target", "N/A"),
+                    "type": "planet" if record in self.body_records else "satellite",
+                }
+        return None
