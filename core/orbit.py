@@ -9,4 +9,8 @@ def create_orbit(radius):
         z = radius * math.sin(angle)
         points.append(Vec3(x, 0, z))
 
-    return Entity(model=Mesh(vertices=points, mode='line'), color=color.white)
+    return Entity(
+        model=Mesh(vertices=points, mode='line'),
+        color=color.rgba(255,255,255,100),
+        scale=1
+    )

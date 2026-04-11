@@ -5,10 +5,12 @@ from data.spice_loader import load_kernels, get_et
 from data.bodies import PLANETS, JUPITER_MOONS, SATURN_MOONS, MARS_MOONS
 from config import SIZE_SCALE, DISTANCE_SCALE
 import spiceypy as spice
+from data.bodies import PLANET_SCALES
+from core.orbit import create_orbit
 
 app = Ursina()
 cam = SimpleCamera()
-Sky(texture="assets/textures/2k_stars.jpg")
+Sky(texture="assets/textures/8k_stars_milky_way.jpg")
 
 load_kernels()
 et = get_et()
@@ -24,7 +26,7 @@ for name, spice_name in PLANETS.items():
     body = CelestialBody(
         name,
         f"assets/textures/2k_{name.lower()}.jpg",
-        SIZE_SCALE,
+        PLANET_SCALES[name] * SIZE_SCALE,
         spice_name=spice_name,
         parent_body="SUN"
     )
@@ -40,6 +42,18 @@ for name, spice_name in SATURN_MOONS.items():
     bodies.append(CelestialBody(name, "assets/textures/2k_moon.jpg", 0.3, spice_name, "SATURN BARYCENTER"))
 
 time_scale = 5000
+
+orbits = []
+
+for name, spice_name in PLANETS.items():
+    try:
+        pos, _ = spice.spkpos(spice_name, et, "J2000", "NONE", "SUN")
+        radius = Vec3(pos[0], pos[2], pos[1]).length() * DISTANCE_SCALE
+        
+        orbit = create_orbit(radius)
+        orbits.append(orbit)
+    except:
+        pass
 
 def update():
     global et

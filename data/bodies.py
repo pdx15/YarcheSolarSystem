@@ -25,3 +25,14 @@ MARS_MOONS = {
     "PHOBOS": "PHOBOS",
     "DEIMOS": "DEIMOS"
 }
+
+PLANET_SCALES = {
+    "MERCURY": 1,
+    "VENUS": 1.5,
+    "EARTH": 1.6,
+    "MARS": 1.2,
+    "JUPITER": 4,
+    "SATURN": 3.5,
+    "URANUS": 2.5,
+    "NEPTUNE": 2.5
+}
