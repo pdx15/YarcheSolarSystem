@@ -5,3 +5,15 @@ data/kernels/sat441.bsp
 /data/__pycache__
 /core/__pycache__
 data/kernels/mar097.bsp
+data/kernels/codes_300ast_20100725.bsp
+data/kernels/jup347.bsp
+data/kernels/nep105.bsp
+data/kernels/plu060.bsp
+data/kernels/sat458.bsp
+data/kernels/tnosat_v001_20050000_jpl043_20220908.bsp
+data/kernels/tnosat_v001_20090482_jpl043_20220908.bsp
+data/kernels/tnosat_v001_20136199_jpl080_20220908.bsp
+data/kernels/tnosat_v001b_20136108_jpl110_20221014.bsp
+data/kernels/ura184_part-1.bsp
+data/kernels/ura184_part-2.bsp
+data/kernels/ura184_part-3.bsp

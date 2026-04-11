@@ -1,12 +1,16 @@
 from ursina import *
-from core.celestial import CelestialBody
+
 from core.camera import SimpleCamera
-from data.spice_loader import load_kernels, get_et
-from data.bodies import PLANETS, JUPITER_MOONS, SATURN_MOONS, MARS_MOONS
-from config import SIZE_SCALE, DISTANCE_SCALE
-import spiceypy as spice
-from data.bodies import PLANET_SCALES, SUN_SCALE
-from core.orbit import create_real_orbit
+from core.solar_system_scene import SolarSystemScene
+
+if __name__ == "__main__":
+    app = Ursina()
+    cam = SimpleCamera()
+    Sky(texture="assets/textures/stars_milky_way.jpg")
+    scene = SolarSystemScene()
+    app.run()
+    raise SystemExit
+"""
 
 app = Ursina()
 cam = SimpleCamera()
@@ -25,7 +29,66 @@ sun = CelestialBody(
 sun_light = PointLight(parent=sun, intensity=5)
 AmbientLight(color=color.rgba(80, 80, 80, 0.2))
 
-bodies = []
+SATELLITE_SYSTEMS = {
+    "MARS BARYCENTER": {
+        "moons": MARS_MOONS,
+        "scales": MARS_MOON_SCALES,
+        "default_scale": 0.15,
+    },
+    "JUPITER BARYCENTER": {
+        "moons": JUPITER_MOONS,
+        "scales": JUPITER_MOON_SCALES,
+        "default_scale": 0.3,
+    },
+    "SATURN BARYCENTER": {
+        "moons": SATURN_MOONS,
+        "scales": SATURN_MOON_SCALES,
+        "default_scale": 0.14,
+    },
+}
+
+SATURN_RING_BANDS = (
+    {"scale_multiplier": 1.45, "tint": color.rgba(189, 170, 134, 90)},
+    {"scale_multiplier": 1.75, "tint": color.rgba(214, 196, 156, 140)},
+    {"scale_multiplier": 2.05, "tint": color.rgba(235, 220, 186, 105)},
+)
+
+
+def to_scaled_vec(position):
+    return Vec3(
+        position[0] * DISTANCE_SCALE,
+        position[2] * DISTANCE_SCALE,
+        position[1] * DISTANCE_SCALE
+    )
+
+
+def get_scaled_position(target, et, observer):
+    position, _ = spice.spkpos(target, et, "J2000", "NONE", observer)
+    return to_scaled_vec(position)
+
+
+def create_saturn_rings(saturn_body):
+    rings = []
+
+    for index, band in enumerate(SATURN_RING_BANDS, start=1):
+        rings.append(Entity(
+            parent=saturn_body,
+            model="quad",
+            texture="assets/textures/saturn_ring_alpha.png",
+            double_sided=True,
+            unlit=True,
+            rotation_x=90,
+            y=index * 0.01,
+            scale=saturn_body.scale_x * band["scale_multiplier"],
+            color=band["tint"],
+        ))
+
+    return rings
+
+
+planet_bodies = []
+satellite_bodies = {parent: [] for parent in SATELLITE_SYSTEMS}
+saturn = None
 
 for name, spice_name in PLANETS.items():
     body = CelestialBody(
@@ -35,16 +98,29 @@ for name, spice_name in PLANETS.items():
         spice_name=spice_name,
         parent_body="SUN"
     )
-    bodies.append(body)
+    planet_bodies.append(body)
 
-for name, spice_name in MARS_MOONS.items():
-    bodies.append(CelestialBody(name, "assets/textures/moon.jpg", 0.2, spice_name, "MARS BARYCENTER"))
+    if name == "SATURN":
+        saturn = body
 
-for name, spice_name in JUPITER_MOONS.items():
-    bodies.append(CelestialBody(name, "assets/textures/moon.jpg", 0.3, spice_name, "JUPITER BARYCENTER"))
+for parent_body, system in SATELLITE_SYSTEMS.items():
+    for name, spice_name in system["moons"].items():
+        satellite_bodies[parent_body].append(
+            CelestialBody(
+                name,
+                "assets/textures/moon.jpg",
+                system["scales"].get(name, system["default_scale"]),
+                spice_name,
+                parent_body
+            )
+        )
 
-for name, spice_name in SATURN_MOONS.items():
-    bodies.append(CelestialBody(name, "assets/textures/moon.jpg", 0.3, spice_name, "SATURN BARYCENTER"))
+saturn_rings = create_saturn_rings(saturn) if saturn else []
+bodies = planet_bodies + [
+    moon
+    for moons in satellite_bodies.values()
+    for moon in moons
+]
 
 time_scale = 5000
 
@@ -73,6 +149,18 @@ for name, spice_name in JUPITER_MOONS.items():
     )
     if orbit:
         orbit.y = -0.05
+        orbits.append(orbit)
+
+for name, spice_name in SATURN_MOONS.items():
+    orbit = create_real_orbit(
+        spice_name,
+        "SATURN BARYCENTER",
+        et,
+        duration_days=180,
+        steps=180
+    )
+    if orbit:
+        orbit.y = -0.03
         orbits.append(orbit)
 
 def update():
@@ -119,3 +207,4 @@ def update():
                 print(f"Ошибка с {body.name}: {e}")
 
 app.run()
+"""
