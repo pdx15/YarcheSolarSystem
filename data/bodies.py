@@ -27,12 +27,14 @@ MARS_MOONS = {
 }
 
 PLANET_SCALES = {
-    "MERCURY": 1,
-    "VENUS": 1.5,
-    "EARTH": 1.6,
-    "MARS": 1.2,
-    "JUPITER": 4,
-    "SATURN": 3.5,
-    "URANUS": 2.5,
-    "NEPTUNE": 2.5
+    "MERCURY": 0.38,
+    "VENUS": 0.95,
+    "EARTH": 1,
+    "MARS": 0.53,
+    "JUPITER": 11.2,
+    "SATURN": 9.45,
+    "URANUS": 4,
+    "NEPTUNE": 3.9
 }
+
+SUN_SCALE = 10

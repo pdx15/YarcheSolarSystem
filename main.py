@@ -5,8 +5,8 @@ from data.spice_loader import load_kernels, get_et
 from data.bodies import PLANETS, JUPITER_MOONS, SATURN_MOONS, MARS_MOONS
 from config import SIZE_SCALE, DISTANCE_SCALE
 import spiceypy as spice
-from data.bodies import PLANET_SCALES
-from core.orbit import create_orbit
+from data.bodies import PLANET_SCALES, SUN_SCALE
+from core.orbit import create_real_orbit
 
 app = Ursina()
 cam = SimpleCamera()
@@ -15,7 +15,12 @@ Sky(texture="assets/textures/8k_stars_milky_way.jpg")
 load_kernels()
 et = get_et()
 
-sun = CelestialBody("SUN", "assets/textures/2k_sun.jpg", 5, "SUN")
+sun = CelestialBody(
+    "SUN",
+    "assets/textures/8k_sun.jpg",
+    SUN_SCALE,
+    "SUN"
+)
 
 sun_light = PointLight(parent=sun, intensity=5)
 AmbientLight(color=color.rgba(80, 80, 80, 0.2))
@@ -25,7 +30,7 @@ bodies = []
 for name, spice_name in PLANETS.items():
     body = CelestialBody(
         name,
-        f"assets/textures/2k_{name.lower()}.jpg",
+        f"assets/textures/8k_{name.lower()}.jpg",
         PLANET_SCALES[name] * SIZE_SCALE,
         spice_name=spice_name,
         parent_body="SUN"
@@ -33,27 +38,42 @@ for name, spice_name in PLANETS.items():
     bodies.append(body)
 
 for name, spice_name in MARS_MOONS.items():
-    bodies.append(CelestialBody(name, "assets/textures/2k_moon.jpg", 0.2, spice_name, "MARS BARYCENTER"))
+    bodies.append(CelestialBody(name, "assets/textures/8k_moon.jpg", 0.2, spice_name, "MARS BARYCENTER"))
 
 for name, spice_name in JUPITER_MOONS.items():
-    bodies.append(CelestialBody(name, "assets/textures/2k_moon.jpg", 0.3, spice_name, "JUPITER BARYCENTER"))
+    bodies.append(CelestialBody(name, "assets/textures/8k_moon.jpg", 0.3, spice_name, "JUPITER BARYCENTER"))
 
 for name, spice_name in SATURN_MOONS.items():
-    bodies.append(CelestialBody(name, "assets/textures/2k_moon.jpg", 0.3, spice_name, "SATURN BARYCENTER"))
+    bodies.append(CelestialBody(name, "assets/textures/8k_moon.jpg", 0.3, spice_name, "SATURN BARYCENTER"))
 
 time_scale = 5000
 
 orbits = []
 
 for name, spice_name in PLANETS.items():
-    try:
-        pos, _ = spice.spkpos(spice_name, et, "J2000", "NONE", "SUN")
-        radius = Vec3(pos[0], pos[2], pos[1]).length() * DISTANCE_SCALE
-        
-        orbit = create_orbit(radius)
+    orbit = create_real_orbit(
+        spice_name,
+        "SUN",
+        et,
+        duration_days=3650,
+        steps=300
+    )
+
+    if orbit:
+        orbit.y = -0.1
         orbits.append(orbit)
-    except:
-        pass
+
+for name, spice_name in JUPITER_MOONS.items():
+    orbit = create_real_orbit(
+        spice_name,
+        "JUPITER BARYCENTER",
+        et,
+        duration_days=20,
+        steps=150
+    )
+    if orbit:
+        orbit.y = -0.05
+        orbits.append(orbit)
 
 def update():
     global et
