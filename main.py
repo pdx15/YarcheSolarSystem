@@ -10,14 +10,14 @@ from core.orbit import create_real_orbit
 
 app = Ursina()
 cam = SimpleCamera()
-Sky(texture="assets/textures/8k_stars_milky_way.jpg")
+Sky(texture="assets/textures/stars_milky_way.jpg")
 
 load_kernels()
 et = get_et()
 
 sun = CelestialBody(
     "SUN",
-    "assets/textures/8k_sun.jpg",
+    "assets/textures/sun.jpg",
     SUN_SCALE,
     "SUN"
 )
@@ -30,7 +30,7 @@ bodies = []
 for name, spice_name in PLANETS.items():
     body = CelestialBody(
         name,
-        f"assets/textures/8k_{name.lower()}.jpg",
+        f"assets/textures/{name.lower()}.jpg",
         PLANET_SCALES[name] * SIZE_SCALE,
         spice_name=spice_name,
         parent_body="SUN"
@@ -38,13 +38,13 @@ for name, spice_name in PLANETS.items():
     bodies.append(body)
 
 for name, spice_name in MARS_MOONS.items():
-    bodies.append(CelestialBody(name, "assets/textures/8k_moon.jpg", 0.2, spice_name, "MARS BARYCENTER"))
+    bodies.append(CelestialBody(name, "assets/textures/moon.jpg", 0.2, spice_name, "MARS BARYCENTER"))
 
 for name, spice_name in JUPITER_MOONS.items():
-    bodies.append(CelestialBody(name, "assets/textures/8k_moon.jpg", 0.3, spice_name, "JUPITER BARYCENTER"))
+    bodies.append(CelestialBody(name, "assets/textures/moon.jpg", 0.3, spice_name, "JUPITER BARYCENTER"))
 
 for name, spice_name in SATURN_MOONS.items():
-    bodies.append(CelestialBody(name, "assets/textures/8k_moon.jpg", 0.3, spice_name, "SATURN BARYCENTER"))
+    bodies.append(CelestialBody(name, "assets/textures/moon.jpg", 0.3, spice_name, "SATURN BARYCENTER"))
 
 time_scale = 5000
 
