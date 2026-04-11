@@ -22,15 +22,28 @@ from data.spice_loader import get_et, get_loaded_spk_targets, load_kernels
 
 
 SATURN_RING_BANDS = (
-    {"inner": 1.35, "outer": 1.58, "color": color.rgba(198, 184, 148, 110)},
-    {"inner": 1.62, "outer": 1.92, "color": color.rgba(221, 205, 167, 150)},
-    {"inner": 1.96, "outer": 2.22, "color": color.rgba(238, 225, 194, 105)},
+    {"inner": 0.74, "outer": 0.88, "color": color.rgba(174, 154, 118, 120)},
+    {"inner": 0.92, "outer": 1.08, "color": color.rgba(204, 186, 150, 165)},
+    {"inner": 1.12, "outer": 1.28, "color": color.rgba(226, 210, 178, 115)},
 )
 
 ASTEROID_BELT_INNER_RADIUS_KM = 329_000_000
 ASTEROID_BELT_OUTER_RADIUS_KM = 478_000_000
 ASTEROID_BELT_COUNT = 450
 MAX_SATELLITE_ORBITS_PER_SYSTEM = 24
+
+PRIMARY_ORBIT_BODIES = {
+    "MERCURY",
+    "VENUS",
+    "EARTH",
+    "MARS",
+    "JUPITER",
+    "SATURN",
+    "URANUS",
+    "NEPTUNE",
+    "PLUTO",
+    "CERES",
+}
 
 SATELLITE_DISTANCE_EXAGGERATION = {
     "EARTH": 80,
@@ -271,7 +284,6 @@ class SolarSystemScene(Entity):
             ring = Entity(
                 parent=saturn_entity,
                 model=mesh,
-                texture="assets/textures/saturn_ring_alpha.png",
                 double_sided=True,
                 unlit=True,
                 transparency=True,
@@ -324,6 +336,8 @@ class SolarSystemScene(Entity):
         for record in self.body_records:
             if record["name"] == "SUN":
                 continue
+            if record["name"] not in PRIMARY_ORBIT_BODIES:
+                continue
 
             duration_days = 3650
             steps = 300
@@ -337,20 +351,7 @@ class SolarSystemScene(Entity):
 
             self._add_orbit(record["target"], "SUN", duration_days, steps, y_offset=-0.05)
 
-        satellite_groups = {}
-        for record in self.satellite_records:
-            satellite_groups.setdefault(record["parent_name"], []).append(record)
-
-        for records in satellite_groups.values():
-            for record in records[:MAX_SATELLITE_ORBITS_PER_SYSTEM]:
-                self._add_orbit(
-                    record["target"],
-                    record["observer"],
-                    180,
-                    180,
-                    y_offset=-0.02,
-                    distance_multiplier=SATELLITE_DISTANCE_EXAGGERATION.get(record["parent_name"], 120),
-                )
+        return
 
     def update(self):
         self.et += time.dt * TIME_SCALE
