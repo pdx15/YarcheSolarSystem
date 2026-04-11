@@ -32,6 +32,21 @@ ASTEROID_BELT_OUTER_RADIUS_KM = 478_000_000
 ASTEROID_BELT_COUNT = 450
 MAX_SATELLITE_ORBITS_PER_SYSTEM = 24
 
+SATELLITE_DISTANCE_EXAGGERATION = {
+    "EARTH": 80,
+    "MARS": 140,
+    "JUPITER": 120,
+    "SATURN": 120,
+    "URANUS": 140,
+    "NEPTUNE": 180,
+    "PLUTO": 220,
+    "HAUMEA": 280,
+    "MAKEMAKE": 280,
+    "QUAOAR": 280,
+    "ORCUS": 280,
+    "ERIS": 280,
+}
+
 
 def select_target(targets, available_targets):
     for target in targets:
@@ -78,6 +93,20 @@ def to_scaled_vec(position):
 def get_scaled_position(target, et, observer):
     position, _ = spice.spkpos(target, et, "J2000", "NONE", observer)
     return to_scaled_vec(position)
+
+
+def exaggerate_satellite_offset(relative_position, parent_entity, parent_name):
+    distance = relative_position.length()
+    if distance <= 0:
+        return relative_position
+
+    display_position = relative_position * SATELLITE_DISTANCE_EXAGGERATION.get(parent_name, 120)
+    minimum_distance = (parent_entity.scale_x * 0.8) + 1.2
+
+    if display_position.length() < minimum_distance:
+        display_position = relative_position.normalized() * minimum_distance
+
+    return display_position
 
 
 def create_ring_mesh(inner_radius, outer_radius, segments=128):
@@ -204,7 +233,7 @@ class SolarSystemScene(Entity):
             target_ids = sorted(
                 body_id
                 for body_id in self.available_targets
-                if any(str(body_id).startswith(prefix) for prefix in family["prefixes"])
+                if any(start <= body_id < end for start, end in family["ranges"])
                 and body_id not in excluded_targets
             )
 
@@ -236,15 +265,16 @@ class SolarSystemScene(Entity):
 
         for index, band in enumerate(SATURN_RING_BANDS, start=1):
             mesh = create_ring_mesh(
-                saturn_entity.scale_x * band["inner"],
-                saturn_entity.scale_x * band["outer"],
+                band["inner"],
+                band["outer"],
             )
             ring = Entity(
                 parent=saturn_entity,
                 model=mesh,
+                texture="assets/textures/saturn_ring_alpha.png",
                 double_sided=True,
                 unlit=True,
-                rotation_x=90,
+                transparency=True,
                 y=index * 0.01,
                 color=band["color"],
             )
@@ -277,8 +307,15 @@ class SolarSystemScene(Entity):
 
         return belt_parent
 
-    def _add_orbit(self, target, center, duration_days, steps, y_offset=0):
-        orbit = create_real_orbit(target, center, self.et, duration_days=duration_days, steps=steps)
+    def _add_orbit(self, target, center, duration_days, steps, y_offset=0, distance_multiplier=1):
+        orbit = create_real_orbit(
+            target,
+            center,
+            self.et,
+            duration_days=duration_days,
+            steps=steps,
+            distance_multiplier=distance_multiplier,
+        )
         if orbit:
             orbit.y = y_offset
             self.orbits.append(orbit)
@@ -306,7 +343,14 @@ class SolarSystemScene(Entity):
 
         for records in satellite_groups.values():
             for record in records[:MAX_SATELLITE_ORBITS_PER_SYSTEM]:
-                self._add_orbit(record["target"], record["observer"], 180, 180, y_offset=-0.02)
+                self._add_orbit(
+                    record["target"],
+                    record["observer"],
+                    180,
+                    180,
+                    y_offset=-0.02,
+                    distance_multiplier=SATELLITE_DISTANCE_EXAGGERATION.get(record["parent_name"], 120),
+                )
 
     def update(self):
         self.et += time.dt * TIME_SCALE
@@ -327,6 +371,11 @@ class SolarSystemScene(Entity):
             try:
                 parent_position = parent["entity"].position
                 relative_position = get_scaled_position(record["target"], self.et, record["observer"])
+                relative_position = exaggerate_satellite_offset(
+                    relative_position,
+                    parent["entity"],
+                    record["parent_name"],
+                )
                 record["entity"].position = parent_position + relative_position
             except Exception:
                 continue

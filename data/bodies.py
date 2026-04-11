@@ -127,6 +127,7 @@ BODY_SCALES = {
     "WEYWOT": 0.025,
     "VANTH": 0.035,
     "DYSNOMIA": 0.035,
+    "MK2": 0.03,
     "HIIAKA": 0.045,
     "NAMAKA": 0.03,
 }
@@ -144,13 +145,13 @@ PLANETARY_BODY_DEFINITIONS = [
 ]
 
 PLANETARY_SATELLITE_FAMILIES = {
-    "EARTH": {"planet_targets": ["399", "3"], "observer": "399", "prefixes": ("3",)},
-    "MARS": {"planet_targets": ["499", "4"], "observer": "499", "prefixes": ("4",)},
-    "JUPITER": {"planet_targets": ["599", "5"], "observer": "599", "prefixes": ("5",)},
-    "SATURN": {"planet_targets": ["699", "6"], "observer": "699", "prefixes": ("6",)},
-    "URANUS": {"planet_targets": ["799", "7"], "observer": "799", "prefixes": ("7",)},
-    "NEPTUNE": {"planet_targets": ["899", "8"], "observer": "899", "prefixes": ("8",)},
-    "PLUTO": {"planet_targets": ["999", "9"], "observer": "999", "prefixes": ("9",)},
+    "EARTH": {"planet_targets": ["399", "3"], "observer": "399", "ranges": ((301, 399),)},
+    "MARS": {"planet_targets": ["499", "4"], "observer": "499", "ranges": ((401, 499),)},
+    "JUPITER": {"planet_targets": ["599", "5"], "observer": "599", "ranges": ((501, 599), (55501, 55600))},
+    "SATURN": {"planet_targets": ["699", "6"], "observer": "699", "ranges": ((601, 699), (65286, 65350))},
+    "URANUS": {"planet_targets": ["799", "7"], "observer": "799", "ranges": ((701, 799), (75051, 75100))},
+    "NEPTUNE": {"planet_targets": ["899", "8"], "observer": "899", "ranges": ((801, 899),)},
+    "PLUTO": {"planet_targets": ["999", "9"], "observer": "999", "ranges": ((901, 999),)},
 }
 
 SMALL_BODY_DEFINITIONS = [
@@ -167,6 +168,14 @@ SMALL_BODY_DEFINITIONS = [
 ]
 
 TNO_SYSTEM_DEFINITIONS = [
+    {
+        "name": "MAKEMAKE",
+        "planet_targets": ["20136472"],
+        "observer": "20136472",
+        "satellites": [
+            {"name": "MK2", "targets": ["120136472"]},
+        ],
+    },
     {
         "name": "HAUMEA",
         "planet_targets": ["20136108"],
