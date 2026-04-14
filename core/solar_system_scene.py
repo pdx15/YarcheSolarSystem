@@ -1,10 +1,8 @@
 import math
 import os
 import random
-
 import spiceypy as spice
 from ursina import *
-
 from config import DISTANCE_SCALE, SIZE_SCALE, TIME_SCALE
 from core.celestial import CelestialBody
 from core.orbit import create_real_orbit
@@ -20,11 +18,10 @@ from data.bodies import (
 )
 from data.spice_loader import get_et, get_loaded_spk_targets, load_kernels
 
-# Кольца Сатурна в километрах (внутренний и внешний радиусы)
 SATURN_RING_BANDS_KM = [
-    {"inner": 74500, "outer": 92000, "color": color.rgba(174, 154, 118, 120)},   # C
-    {"inner": 92000, "outer": 117000, "color": color.rgba(204, 186, 150, 165)},  # B
-    {"inner": 122000, "outer": 136800, "color": color.rgba(226, 210, 178, 115)}, # A
+    {"inner": 74500, "outer": 92000, "color": color.rgba(174, 154, 118, 120)},
+    {"inner": 92000, "outer": 117000, "color": color.rgba(204, 186, 150, 165)},
+    {"inner": 122000, "outer": 136800, "color": color.rgba(226, 210, 178, 115)},
 ]
 
 ASTEROID_BELT_INNER_RADIUS_KM = 329_000_000
@@ -282,7 +279,7 @@ class SolarSystemScene(Entity):
                 duration_days = 2500
                 steps = 240
             elif record["name"] in {"MERCURY", "VENUS", "EARTH", "MARS"}:
-                steps = 500  # Больше точек для внутренних планет
+                steps = 500
             self._add_orbit(record["target"], "SUN", duration_days, steps, y_offset=-0.05)
 
     def update(self):
@@ -312,7 +309,6 @@ class SolarSystemScene(Entity):
                 continue
 
     def get_body_info(self, entity):
-        """Возвращает словарь с информацией о теле по его Entity."""
         for record in self.body_records + self.satellite_records:
             if record["entity"] == entity:
                 return {
