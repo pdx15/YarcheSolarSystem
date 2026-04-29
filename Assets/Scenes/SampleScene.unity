@@ -493,6 +493,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SolarSystemLoader
   filePath: unity_positions.json
   planetPrefab: {fileID: 6642047667446334111, guid: cac60196546f3c44cb786f65bdf9ea72, type: 3}
+  positionScale: 0.0000001
+  distanceMultiplier: 50
 --- !u!1 &1556940420
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,6 +1,9 @@
 import json
 import spiceypy as spice
 
+spice.furnsh("Assets/StreamingAssets/kernels/naif0012.tls")
+spice.furnsh("Assets/StreamingAssets/kernels/de440.bsp")
+
 et = spice.str2et("2025-01-01T00:00:00")
 
 bodies = [
@@ -20,8 +23,10 @@ for b in bodies:
             "y": float(pos[1]),
             "z": float(pos[2])
         }
-    except:
-        pass
+    except Exception as e:
+        print("Ошибка:", b, e)
 
 with open("unity_positions.json", "w") as f:
-    json.dump(data, f)
+    json.dump({"keys": list(data.keys()), "values": list(data.values())}, f, indent=2)
+
+spice.kclear()
